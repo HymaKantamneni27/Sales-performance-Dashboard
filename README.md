@@ -55,8 +55,8 @@ This project covers the full data analytics pipeline — from raw data cleaning 
 
 | File | Description |
 |---|---|
-| `Sales_Performance_Dashboard.html` | Standalone interactive web dashboard |
-[Sales_Performance_Dashboard.html](https://github.com/user-attachments/files/28163124/Sales_Performance_Dashboard.html)
+| `index.html` | Standalone interactive web dashboard |
+[[index.html](https://github.com/user-attachments/files/28228292/index.html)
 
 | `salesquery.csv` | Cleaned Superstore dataset |
 [salesquery.csv](https://github.com/user-attachments/files/28163129/salesquery.csv)
