@@ -49,7 +49,7 @@ This project covers the full data analytics pipeline — from raw data cleaning 
 
 ## Live Demo
 
-[View the interactive dashboard here](https://yourusername.github.io/sales-performance-dashboard)
+
 
 ## Files Included
 
