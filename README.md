@@ -48,8 +48,8 @@ This project covers the full data analytics pipeline — from raw data cleaning 
 - Live web version built with HTML and Chart.js
 
 ## Live Demo
-
-
+[View Live Dashboard] 
+https://hymakantamneni27.github.io/Sales-performance-Dashboard/
 
 ## Files Included
 
