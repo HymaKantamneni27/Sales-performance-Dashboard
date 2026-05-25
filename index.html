@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sales Performance Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --blue-900: #042C53;
+    --blue-800: #0C447C;
+    --blue-600: #185FA5;
+    --blue-400: #378ADD;
+    --blue-200: #85B7EB;
+    --blue-100: #B5D4F4;
+    --blue-50:  #E6F1FB;
+    --green-600: #3B6D11;
+    --green-50:  #EAF3DE;
+    --amber-600: #BA7517;
+    --amber-50:  #FAEEDA;
+    --pink-600:  #993556;
+    --pink-50:   #FBEAF0;
+    --gray-800:  #444441;
+    --gray-200:  #B4B2A9;
+    --gray-50:   #F1EFE8;
+    --white:     #ffffff;
+    --bg:        #F4F7FB;
+    --card:      #ffffff;
+    --border:    rgba(0,0,0,0.08);
+    --text:      #1a1a2e;
+    --muted:     #6b7280;
+  }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    width: 220px;
+    min-height: 100vh;
+    background: var(--blue-800);
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem 1rem;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 2rem;
+    padding: 0 8px;
+  }
+  .logo-icon {
+    width: 32px; height: 32px;
+    background: var(--blue-400);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .logo-icon svg { width: 18px; height: 18px; fill: white; }
+  .logo-text { color: white; font-size: 14px; font-weight: 600; line-height: 1.2; }
+  .logo-sub { color: var(--blue-200); font-size: 11px; }
+  .nav-section { font-size: 10px; color: var(--blue-200); letter-spacing: .1em; padding: 0 8px; margin-bottom: 6px; margin-top: 1rem; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px; border-radius: 8px;
+    color: var(--blue-100); font-size: 13px;
+    cursor: pointer; transition: background .15s;
+    margin-bottom: 2px;
+  }
+  .nav-item.active { background: rgba(255,255,255,.18); color: white; }
+  .nav-item:hover:not(.active) { background: rgba(255,255,255,.08); }
+  .nav-item svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.8; flex-shrink: 0; }
+  .sidebar-footer {
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255,255,255,.1);
+  }
+
+  /* Main */
+  .main {
+    margin-left: 220px;
+    flex: 1;
+    padding: 1.75rem 1.5rem;
+    min-height: 100vh;
+  }
+  .top-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1.5rem;
+  }
+  .page-title { font-size: 20px; font-weight: 600; color: var(--text); }
+  .page-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .filters { display: flex; gap: 10px; align-items: center; }
+  .filter-label { font-size: 12px; color: var(--muted); }
+  select {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px; padding: 7px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    cursor: pointer;
+    outline: none;
+    transition: border .15s;
+  }
+  select:focus { border-color: var(--blue-400); }
+
+  /* KPI Cards */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 1.25rem;
+  }
+  .kpi {
+    background: var(--card);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    padding: 1.1rem 1.25rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: 12px 12px 0 0;
+  }
+  .kpi.blue::before { background: var(--blue-600); }
+  .kpi.green::before { background: var(--green-600); }
+  .kpi.amber::before { background: var(--amber-600); }
+  .kpi.pink::before { background: var(--pink-600); }
+  .kpi-icon {
+    width: 36px; height: 36px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 10px;
+  }
+  .kpi-icon svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+  .kpi.blue .kpi-icon { background: var(--blue-50); color: var(--blue-600); }
+  .kpi.green .kpi-icon { background: var(--green-50); color: var(--green-600); }
+  .kpi.amber .kpi-icon { background: var(--amber-50); color: var(--amber-600); }
+  .kpi.pink .kpi-icon { background: var(--pink-50); color: var(--pink-600); }
+  .kpi-label { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  .kpi-value { font-size: 22px; font-weight: 600; color: var(--text); font-family: 'DM Mono', monospace; }
+  .kpi-badge {
+    display: inline-block; font-size: 11px; padding: 2px 8px;
+    border-radius: 20px; margin-top: 6px; font-weight: 500;
+  }
+  .kpi.blue .kpi-badge { background: var(--blue-50); color: var(--blue-800); }
+  .kpi.green .kpi-badge { background: var(--green-50); color: var(--green-600); }
+  .kpi.amber .kpi-badge { background: var(--amber-50); color: var(--amber-600); }
+  .kpi.pink .kpi-badge { background: var(--pink-50); color: var(--pink-600); }
+
+  /* Charts */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .chart-card {
+    background: var(--card);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    padding: 1.25rem;
+  }
+  .chart-card.full { grid-column: 1 / -1; }
+  .chart-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+  .chart-title { font-size: 14px; font-weight: 500; color: var(--text); }
+  .chart-badge {
+    font-size: 11px; padding: 3px 10px;
+    border-radius: 20px;
+    background: var(--blue-50);
+    color: var(--blue-800);
+    font-weight: 500;
+  }
+  .chart-wrap { position: relative; width: 100%; }
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 12px; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--muted); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+
+  /* Insights */
+  .insights-card {
+    background: var(--card);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    padding: 1.25rem;
+    margin-bottom: 12px;
+  }
+  .insights-header {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 1rem;
+  }
+  .insights-title { font-size: 14px; font-weight: 500; color: var(--text); }
+  .insights-icon {
+    width: 28px; height: 28px; border-radius: 7px;
+    background: var(--blue-50);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .insights-icon svg { width: 15px; height: 15px; stroke: var(--blue-600); fill: none; stroke-width: 1.8; }
+  .insights-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .insight-item {
+    border-radius: 10px;
+    padding: .85rem 1rem;
+    border-left: 3px solid;
+  }
+  .insight-item.blue { background: var(--blue-50); border-color: var(--blue-600); }
+  .insight-item.green { background: var(--green-50); border-color: var(--green-600); }
+  .insight-item.amber { background: var(--amber-50); border-color: var(--amber-600); }
+  .insight-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .insight-val { font-size: 13px; font-weight: 500; color: var(--text); }
+
+  /* Tables */
+  .tables-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .table-card {
+    background: var(--card);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    padding: 1.25rem;
+    overflow: hidden;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th {
+    text-align: left; padding: 8px 10px;
+    color: var(--muted); font-weight: 500;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px; letter-spacing: .03em;
+  }
+  td { padding: 8px 10px; border-bottom: 1px solid rgba(0,0,0,.04); color: var(--text); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--blue-50); }
+  .rank {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--blue-50); color: var(--blue-800);
+    font-size: 11px; font-weight: 600;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .bar-cell { display: flex; align-items: center; gap: 8px; }
+  .mini-bar { height: 5px; border-radius: 3px; background: var(--blue-200); flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24"><path d="M3 3h7v7H3zm11 0h7v7h-7zM3 14h7v7H3zm14 3a4 4 0 100-8 4 4 0 000 8z"/></svg>
+    </div>
+    <div>
+      <div class="logo-text">SalesPulse</div>
+      <div class="logo-sub">Analytics Dashboard</div>
+    </div>
+  </div>
+
+  <div class="nav-section">MAIN MENU</div>
+  <div class="nav-item active">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Overview
+  </div>
+  <div class="nav-item">
+    <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    Sales Trend
+  </div>
+  <div class="nav-item">
+    <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+    Regions
+  </div>
+  <div class="nav-item">
+    <svg viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+    Categories
+  </div>
+  <div class="nav-item">
+    <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+    Customers
+  </div>
+  <div class="nav-item">
+    <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+    Products
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>
+      Settings
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="top-bar">
+    <div>
+      <div class="page-title">Sales Performance Dashboard</div>
+      <div class="page-sub">Sample Superstore · 9,694 records · 2014–2017</div>
+    </div>
+    <div class="filters">
+      <span class="filter-label">Filter by:</span>
+      <select id="regionFilter" onchange="applyFilters()">
+        <option value="all">All regions</option>
+        <option value="West">West</option>
+        <option value="East">East</option>
+        <option value="Central">Central</option>
+        <option value="South">South</option>
+      </select>
+      <select id="catFilter" onchange="applyFilters()">
+        <option value="all">All categories</option>
+        <option value="Technology">Technology</option>
+        <option value="Office Supplies">Office Supplies</option>
+        <option value="Furniture">Furniture</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid">
+    <div class="kpi blue">
+      <div class="kpi-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
+      <div class="kpi-label">Total Sales</div>
+      <div class="kpi-value" id="kpi-sales">$2.27M</div>
+      <div class="kpi-badge" id="kpi-sales-badge">9,694 orders</div>
+    </div>
+    <div class="kpi green">
+      <div class="kpi-icon"><svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
+      <div class="kpi-label">Total Profit</div>
+      <div class="kpi-value" id="kpi-profit">$282.9K</div>
+      <div class="kpi-badge" id="kpi-profit-badge">12.4% margin</div>
+    </div>
+    <div class="kpi amber">
+      <div class="kpi-icon"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+      <div class="kpi-label">Total Orders</div>
+      <div class="kpi-value" id="kpi-orders">9,694</div>
+      <div class="kpi-badge">Across 4 regions</div>
+    </div>
+    <div class="kpi pink">
+      <div class="kpi-icon"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 110 20A10 10 0 0112 2zm0 0v10l6 3"/></svg></div>
+      <div class="kpi-label">Profit Margin</div>
+      <div class="kpi-value" id="kpi-margin">12.4%</div>
+      <div class="kpi-badge">Overall average</div>
+    </div>
+  </div>
+
+  <!-- Charts Row 1 -->
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title">Sales by region</div>
+        <div class="chart-badge">4 regions</div>
+      </div>
+      <div class="chart-wrap" style="height:200px">
+        <canvas id="regionChart" role="img" aria-label="Bar chart showing sales by region. West leads at $713K.">West $713K, East $672K, Central $498K, South $389K.</canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title">Profit by category</div>
+        <div class="chart-badge">3 categories</div>
+      </div>
+      <div class="legend">
+        <span class="legend-item"><span class="legend-dot" style="background:#185FA5"></span>Technology</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#3B6D11"></span>Office Supplies</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#BA7517"></span>Furniture</span>
+      </div>
+      <div class="chart-wrap" style="height:170px">
+        <canvas id="catChart" role="img" aria-label="Bar chart of profit by category. Technology leads at $145K.">Technology $145K, Office Supplies $120K, Furniture $17K.</canvas>
+      </div>
+    </div>
+    <div class="chart-card full">
+      <div class="chart-header">
+        <div class="chart-title">Monthly sales trend</div>
+        <div class="chart-badge">2014 – 2017</div>
+      </div>
+      <div class="chart-wrap" style="height:180px">
+        <canvas id="trendChart" role="img" aria-label="Line chart showing monthly sales trend with seasonal peaks in Q4.">Monthly sales from Jan 2014 to Dec 2017 showing upward trend with Q4 peaks each year.</canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Insights -->
+  <div class="insights-card">
+    <div class="insights-header">
+      <div class="insights-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 017 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 01-1 1H9a1 1 0 01-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 017-7z"/><line x1="9" y1="21" x2="15" y2="21"/><line x1="10" y1="17" x2="10" y2="21"/><line x1="14" y1="17" x2="14" y2="21"/></svg>
+      </div>
+      <div class="insights-title">Key business insights</div>
+    </div>
+    <div class="insights-grid">
+      <div class="insight-item blue">
+        <div class="insight-label">Top performing region</div>
+        <div class="insight-val">West — $713K in total sales</div>
+      </div>
+      <div class="insight-item blue">
+        <div class="insight-label">Top customer</div>
+        <div class="insight-val">Sean Miller — $25K revenue</div>
+      </div>
+      <div class="insight-item blue">
+        <div class="insight-label">Top product</div>
+        <div class="insight-val">Canon imageCLASS — $61K</div>
+      </div>
+      <div class="insight-item green">
+        <div class="insight-label">Most profitable category</div>
+        <div class="insight-val">Technology — $145K profit</div>
+      </div>
+      <div class="insight-item green">
+        <div class="insight-label">Strongest sales period</div>
+        <div class="insight-val">Q4 peaks every year consistently</div>
+      </div>
+      <div class="insight-item amber">
+        <div class="insight-label">Lowest profit margin</div>
+        <div class="insight-val">Furniture — only $17K despite high sales</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tables -->
+  <div class="tables-grid">
+    <div class="table-card">
+      <div class="chart-header">
+        <div class="chart-title">Top 10 products</div>
+        <div class="chart-badge">By sales</div>
+      </div>
+      <table>
+        <thead><tr><th>#</th><th>Product</th><th>Sales</th></tr></thead>
+        <tbody id="productsTable"></tbody>
+      </table>
+    </div>
+    <div class="table-card">
+      <div class="chart-header">
+        <div class="chart-title">Top 10 customers</div>
+        <div class="chart-badge">By sales</div>
+      </div>
+      <table>
+        <thead><tr><th>#</th><th>Customer</th><th>Sales</th></tr></thead>
+        <tbody id="customersTable"></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<script>
+const allData = {
+  regions: {
+    West:{sales:713471,profit:108418,orders:2345},
+    East:{sales:672194,profit:91522,orders:2312},
+    Central:{sales:497801,profit:39667,orders:2543},
+    South:{sales:388984,profit:46251,orders:2494}
+  },
+  categories: {
+    Technology:{sales:836154,profit:145388,orders:1847},
+    "Office Supplies":{sales:719047,profit:120490,orders:6026},
+    Furniture:{sales:741749,profit:16981,orders:2215}
+  },
+  monthly:[19595,11809,7074,12262,15280,11838,10175,26480,35173,46749,78628,62891,
+           16427,22411,17916,27453,43123,38612,32416,48668,58374,76908,89796,77967,
+           21490,30152,19807,33564,47320,41238,34561,55432,67234,83421,96754,84321,
+           25234,34521,24567,38764,52341,45678,38901,61234,72345,91234,117890,88234],
+  products:[
+    {name:'Canon imageCLASS 2200 Advanced Copier',sales:61599},
+    {name:'Fellowes PB500 Electric Punch Plastic Comb Binder',sales:27453},
+    {name:'Cisco TelePresence System EX90 Videoconferencing Unit',sales:22638},
+    {name:'HON 5400 Series Task Chairs for Big and Tall',sales:21870},
+    {name:'GBC DocuBind TL300 Electric Binding System',sales:19823},
+    {name:'GBC Ibimaster 500 Manual ProClick Binding System',sales:19024},
+    {name:'Hewlett Packard LaserJet 3310 Copier',sales:18839},
+    {name:'HP Designjet T520 Inkjet Large Format Printer',sales:18374},
+    {name:'Cubify CubeX 3D Printer Double Head Print',sales:17499},
+    {name:'Ibico EPK-21 Electric Binding System',sales:15879}
+  ],
+  customers:[
+    {name:'Sean Miller',sales:25043},
+    {name:'Tamara Chand',sales:19017},
+    {name:'Raymond Buch',sales:15117},
+    {name:'Tom Ashbrook',sales:14595},
+    {name:'Adrian Barton',sales:14355},
+    {name:'Sanjit Chand',sales:14142},
+    {name:'Ken Lonsdale',sales:14071},
+    {name:'Hunter Lopez',sales:12873},
+    {name:'Sanjit Engle',sales:12209},
+    {name:'Christopher Conant',sales:11877}
+  ]
+};
+
+const textColor = '#6b7280';
+const gridColor = 'rgba(0,0,0,0.06)';
+
+const regionChart = new Chart(document.getElementById('regionChart'),{
+  type:'bar',
+  data:{
+    labels:['West','East','Central','South'],
+    datasets:[{
+      data:[713471,672194,497801,388984],
+      backgroundColor:['#185FA5','#378ADD','#85B7EB','#B5D4F4'],
+      borderRadius:6, borderSkipped:false
+    }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{
+      x:{ticks:{color:textColor,font:{size:12,family:'DM Sans'}},grid:{display:false}},
+      y:{ticks:{color:textColor,font:{size:11},callback:v=>'$'+Math.round(v/1000)+'K'},grid:{color:gridColor},border:{display:false}}
+    }
+  }
+});
+
+const catChart = new Chart(document.getElementById('catChart'),{
+  type:'bar',
+  data:{
+    labels:['Technology','Office Supplies','Furniture'],
+    datasets:[{
+      data:[145388,120490,16981],
+      backgroundColor:['#185FA5','#3B6D11','#BA7517'],
+      borderRadius:6
+    }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{
+      x:{ticks:{color:textColor,font:{size:11}},grid:{display:false}},
+      y:{ticks:{color:textColor,font:{size:11},callback:v=>'$'+Math.round(v/1000)+'K'},grid:{color:gridColor},border:{display:false}}
+    }
+  }
+});
+
+const months=['Jan 14','Feb 14','Mar 14','Apr 14','May 14','Jun 14','Jul 14','Aug 14','Sep 14','Oct 14','Nov 14','Dec 14',
+  'Jan 15','Feb 15','Mar 15','Apr 15','May 15','Jun 15','Jul 15','Aug 15','Sep 15','Oct 15','Nov 15','Dec 15',
+  'Jan 16','Feb 16','Mar 16','Apr 16','May 16','Jun 16','Jul 16','Aug 16','Sep 16','Oct 16','Nov 16','Dec 16',
+  'Jan 17','Feb 17','Mar 17','Apr 17','May 17','Jun 17','Jul 17','Aug 17','Sep 17','Oct 17','Nov 17','Dec 17'];
+
+new Chart(document.getElementById('trendChart'),{
+  type:'line',
+  data:{
+    labels:months,
+    datasets:[{
+      data:allData.monthly,
+      borderColor:'#185FA5',
+      backgroundColor:'rgba(24,95,165,0.07)',
+      fill:true, tension:.35,
+      pointRadius:0, borderWidth:2.5
+    }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{
+      x:{ticks:{color:textColor,font:{size:10},maxRotation:45,autoSkip:true,maxTicksLimit:12},grid:{display:false}},
+      y:{ticks:{color:textColor,font:{size:11},callback:v=>'$'+Math.round(v/1000)+'K'},grid:{color:gridColor},border:{display:false}}
+    }
+  }
+});
+
+function populateTables(products, customers) {
+  document.getElementById('productsTable').innerHTML = products.map((p,i)=>`
+    <tr>
+      <td><span class="rank">${i+1}</span></td>
+      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${p.name}">${p.name}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:12px;font-weight:500">$${p.sales.toLocaleString()}</td>
+    </tr>`).join('');
+  document.getElementById('customersTable').innerHTML = customers.map((c,i)=>`
+    <tr>
+      <td><span class="rank">${i+1}</span></td>
+      <td>${c.name}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:12px;font-weight:500">$${c.sales.toLocaleString()}</td>
+    </tr>`).join('');
+}
+
+populateTables(allData.products, allData.customers);
+
+function applyFilters() {
+  const region = document.getElementById('regionFilter').value;
+  const cat = document.getElementById('catFilter').value;
+  let totalSales=0, totalProfit=0, totalOrders=0;
+
+  if(region==='all') {
+    Object.values(allData.regions).forEach(r=>{totalSales+=r.sales;totalProfit+=r.profit;totalOrders+=r.orders});
+    regionChart.data.datasets[0].data=[713471,672194,497801,388984];
+  } else {
+    const r=allData.regions[region];
+    totalSales=r.sales; totalProfit=r.profit; totalOrders=r.orders;
+    regionChart.data.datasets[0].data=['West','East','Central','South'].map(l=>l===region?allData.regions[l].sales:0);
+  }
+  if(cat!=='all') {
+    const c=allData.categories[cat];
+    totalSales=c.sales; totalProfit=c.profit; totalOrders=c.orders;
+    catChart.data.datasets[0].data=['Technology','Office Supplies','Furniture'].map(l=>l===cat?allData.categories[l].profit:0);
+  } else {
+    catChart.data.datasets[0].data=[145388,120490,16981];
+  }
+
+  const margin=(totalProfit/totalSales*100).toFixed(1);
+  document.getElementById('kpi-sales').textContent='$'+Math.round(totalSales/1000)+'K';
+  document.getElementById('kpi-profit').textContent='$'+Math.round(totalProfit/1000)+'K';
+  document.getElementById('kpi-orders').textContent=totalOrders.toLocaleString();
+  document.getElementById('kpi-margin').textContent=margin+'%';
+  document.getElementById('kpi-sales-badge').textContent=totalOrders.toLocaleString()+' orders';
+  document.getElementById('kpi-profit-badge').textContent=margin+'% margin';
+
+  regionChart.update();
+  catChart.update();
+}
+</script>
+</body>
+</html>
